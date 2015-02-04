@@ -18,13 +18,16 @@ for child in root:
            if pattern.match(value):
                o=pattern.match(value)
                groups=o.groups()
-               ch.set('value',groups[0]+'192.168.32.37'+groups[2])
+               if value.find('mariadb') != -1:
+                  ch.set('value',groups[0].replace('mariadb','mysql')+'192.168.32.37'+groups[2])
+               else:
+                  ch.set('value',groups[0]+'192.168.32.37'+groups[2])
            if name=='password':
                ch.set('value','root')
            if name == 'driverClassName' and value.find('org.mariadb') != -1:
                ch.set('value',value.replace('org.mariadb','com.mysql')) 
-           if name == 'url' and value.find('mariadb') != -1:
-               ch.set('value',value.replace('mariadb','mysql'))
+           # if name == 'url' and value.find('mariadb') != -1:
+           #     ch.set('value',value.replace('mariadb','mysql'))
 
 tree.write(outputFile)
 outputFile.close()
