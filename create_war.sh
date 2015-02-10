@@ -1,13 +1,11 @@
 #/bin/sh
 #stopping tomcat
 echo "Stopping Tomcat"
-CATALINA_PID=`ps -ef | grep java | grep tomcat | cut -c10-14`
-kill -9  $CATALINA_PID
+`ps aux | grep tomcat | awk '{print $2}' | xargs sudo kill -9
 if test $? -eq 0 ; then
 	echo "Stopped the tomcat";
 else
 	echo "Exiting, tomcat was NOT Stopped";
-	echo $CATALINA_PID;
 fi
 sleep 3
 
