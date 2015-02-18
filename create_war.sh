@@ -1,7 +1,23 @@
 #/bin/sh
 #stopping tomcat
+TOMCAT_DIRECTORY_PATH=/usr/local/tomcat  #need to be changed
+CARDEKHO_PROJECT_DIRECTORY_PATH=/media/disk1/CarDekhoProject/ecarsinfo/trunk  #need to be changed
+BACKUP_DIRECTORY_PATH=/media/disk1/car_backups #need to be changed
+
+cd $CARDEKHO_PROJECT_DIRECTORY_PATH
+pwd
+echo "getting update from svn head"
+RESULT=${svn up} | grep applicationContext.xml
+if [ -z "$RESULT" ]; then
+	echo "file applicationContext.xml is unchanged .."
+	FLAG=FALSE
+else
+	echo "file applicationContext.xml is changed(updated) .."
+	FLAG=TRUE
+fi
+
 echo "Stopping Tomcat"
-`ps aux | grep tomcat | awk '{print $2}' | xargs sudo kill -9
+ps aux | grep tomcat | awk '{print $2}' | ${xargs sudo kill -9}
 if test $? -eq 0 ; then
 	echo "Stopped the tomcat";
 else
@@ -9,7 +25,7 @@ else
 fi
 sleep 3
 
-echo "Doing Ant on CarDekho/Trunk"
+echo "runnig command Ant in directory $pwd"
 ant > /dev/null
 if test $? -eq 0 ; then
 	echo "Ant successfull";
@@ -19,7 +35,7 @@ else
 fi
 
 cd ..
-echo "Doing Ant ExportForMobiJar on CarDekho"
+echo "running command Ant ExportForJar on CarDekho"
 ant exportforjar > /dev/null
 #ant exportforjar > /dev/null
 if test $? -eq 0 ; then
@@ -30,15 +46,15 @@ else
 fi
 
 echo "backup created then car move tomcat folder and changes in some files"
-NOW=$(date +"%m-%d-%Y")
+NOW=$(date +"%m-%d-%Y:%I%p")
 echo "create backup folder name:-"$NOW
-mkdir /home/mukesh/Documents/Backup_Mobile_2014/$NOW
-chmod -R 777 /home/mukesh/Documents/Backup_Mobile_2014/$NOW
+mkdir $BACKUP_DIRECTORY_PATH/$NOW
+chmod -R 777 $BACKUP_DIRECTORY_PATH/$NOW
 echo "backup car"
-mv /usr/local/tomcat/webapps/car /home/mukesh/Documents/Backup_Mobile_2014/$NOW
+mv $TOMCAT_DIRECTORY_PATH/webapps/car $BACKUP_DIRECTORY_PATH/$NOW
 echo "copy war file desktop "
-cp -rv /media/dddfb84e-7b25-40a6-a929-671c12d71bbf/CarDekhoProject/ecarsinfo/tbsexport/car.war /home/mukesh/Desktop/
-cd /home/mukesh/Desktop/
+cp $CARDEKHO_PROJECT_DIRECTORY_PATH/../tbsexport/car.war /home/$USER/Desktop/
+cd /home/$USER/Desktop/
 mkdir car
 cd car
 echo "extract tar file"
@@ -47,9 +63,9 @@ echo "rename file"
 cd ..
 mv car/ car/
 echo "move war in  tomcat"
-mv car/ /usr/local/tomcat/webapps/
+mv car/ $TOMCAT_DIRECTORY_PATH/webapps/
 echo "replace email properties file in tomcat"
-cp -rv  /home/mukesh/Documents/Backup_Mobile_2014/$NOW/car/WEB-INF/classes/emailProperties.properties /usr/local/tomcat/webapps/car/WEB-INF/classes
+cp  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/emailProperties.properties $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
 if test $? -eq 0 ; then
 	echo "email properties copy successfully";
 else
@@ -57,28 +73,34 @@ else
 	exit 1;
 fi
 echo "replace SMSMessageSendResource properties file in tomcat"
-cp -rv  /home/mukesh/Documents/Backup_Mobile_2014/$NOW/car/WEB-INF/classes/SMSMessageSendResource.properties /usr/local/tomcat/webapps/car/WEB-INF/classes
-echo "replace applicationContext properties file in tomcat"
-cp -rv  /home/mukesh/Documents/Backup_Mobile_2014/$NOW/car/WEB-INF/classes/applicationContext.xml /usr/local/tomcat/webapps/car/WEB-INF/classes
+cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/SMSMessageSendResource.properties $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
+
+if test $FLAG -eq FALSE ; then
+	echo "replace applicationContext properties file in tomcat"
+	cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/applicationContext.xml $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
+else
+	sudo python applicationContextChange.py $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes #provide custom ip
+	sudo mv output.xml $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes/applicationContext.xml
+
 echo "replace scriptsconfig properties file in tomcat"
-cp -rv  /home/mukesh/Documents/Backup_Mobile_2014/$NOW/car/WEB-INF/classes/scriptsconfig.properties /usr/local/tomcat/webapps/car/WEB-INF/classes
-echo "replace scriptsconfig properties file in tomcat"
-rm -rf /usr/local/tomcat/webapps/car/WEB-INF/lib/
-cp -rv  /home/mukesh/Documents/Backup_Mobile_2014/$NOW/car/WEB-INF/lib/ /usr/local/tomcat/webapps/car/WEB-INF/
+cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/scriptsconfig.properties $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
+echo "replace lib in tomcat"
+sudo rm -rf $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/lib/
+cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/lib/ $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/
 if test $? -eq 0 ; then
 	echo "move lib successfully";
 else
 	echo "error in move"
 fi
-rm -rf /home/mukesh/Desktop/car.war
-chmod -R 777 /usr/local/tomcat/webapps/car/WEB-INF/
+rm -rf /home/$USER/Desktop/car.war
+chmod -R 777 $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/
 echo "sucessfully create war file."
 
 
 
 #starting the tomcat
 echo "starting the tomcat"
-cd /usr/local/tomcat/bin/
+cd $TOMCAT_DIRECTORY_PATH/bin/
 sh catalina.sh jpda start
 if test $? -eq 0 ; then
 	echo "Started the tomcat";

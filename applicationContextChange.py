@@ -1,8 +1,22 @@
 #!/usr/bin/env python
 import xml.etree.ElementTree as ET
 import re
+import sys
+import os
 
-tree = ET.parse('applicationContext.xml')
+try:
+  dirPath = sys.argv[1]
+except Exception, e:
+  print "command line argumnets were not provided, using defaults"
+  dirPath = os.path.dirname(__file__)
+
+try:
+  ip = sys.argv[2]
+except Exception, e:
+  print "command line argumnets were not provided, using defaults"
+  ip = localhost
+
+tree = ET.parse(dirPath+'/applicationContext.xml')
 root = tree.getroot()
 pattern = re.compile('(jdbc.*//)(.*)(:3306/.*)')
 
@@ -19,9 +33,9 @@ for child in root:
                o=pattern.match(value)
                groups=o.groups()
                if value.find('mariadb') != -1:
-                  ch.set('value',groups[0].replace('mariadb','mysql')+'192.168.32.37'+groups[2])
+                  ch.set('value',groups[0].replace('mariadb','mysql')+ip+groups[2])
                else:
-                  ch.set('value',groups[0]+'192.168.32.37'+groups[2])
+                  ch.set('value',groups[0]+ip+groups[2])
            if name=='password':
                ch.set('value','root')
            if name == 'driverClassName' and value.find('org.mariadb') != -1:
