@@ -3,6 +3,7 @@
 TOMCAT_DIRECTORY_PATH=/usr/local/tomcat  #need to be changed
 CARDEKHO_PROJECT_DIRECTORY_PATH=/media/disk1/CarDekho/ecarsinfo/trunk  #need to be changed
 BACKUP_DIRECTORY_PATH=/media/disk1/car_backups #need to be changed
+U=`who am i | awk '{print $1}'`
 
 cd $CARDEKHO_PROJECT_DIRECTORY_PATH
 echo "getting update from svn head"
@@ -29,8 +30,8 @@ else
 fi
 sleep 3
 
-echo "runnig command Ant in directory $pwd"
-`sudo ant` > /dev/null
+echo "runnig command Ant in directory: "pwd
+ant > /dev/null
 if test $? -eq 0 ; then
 	echo "Ant successfull";
 else
@@ -40,8 +41,7 @@ fi
 
 cd ..
 echo "running command Ant ExportForJar on CarDekho"
-`ant exportforjar` > /dev/null
-#ant exportforjar > /dev/null
+ant exportforjar > /dev/null
 if test $? -eq 0 ; then
 	echo "Ant ExportForJar successfull";
 else
@@ -57,8 +57,8 @@ chmod -R 777 $BACKUP_DIRECTORY_PATH/$NOW
 echo "backup car"
 mv $TOMCAT_DIRECTORY_PATH/webapps/car $BACKUP_DIRECTORY_PATH/$NOW
 echo "copy war file desktop "
-`cp $CARDEKHO_PROJECT_DIRECTORY_PATH/../tbsexport/car.war /home/$USER/Desktop/`
-cd /home/$USER/Desktop/
+`cp $CARDEKHO_PROJECT_DIRECTORY_PATH/../tbsexport/car.war /home/$U/Desktop/`
+cd /home/$U/Desktop/
 mkdir car
 cd car
 echo "extract tar file"
@@ -83,9 +83,9 @@ if test $FLAG -eq FALSE ; then
 	echo "replace applicationContext properties file in tomcat"
 	cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/applicationContext.xml $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
 else
-	sudo python applicationContextChange.py $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes #provide custom ip
+	sudo python applicationContextChange.py $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes #provide custom ip default localhost
 	sudo mv output.xml $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes/applicationContext.xml
-
+fi
 echo "replace scriptsconfig properties file in tomcat"
 cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/scriptsconfig.properties $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
 echo "replace lib in tomcat"
@@ -96,7 +96,7 @@ if test $? -eq 0 ; then
 else
 	echo "error in move"
 fi
-rm -rf /home/$USER/Desktop/car.war
+rm -rf /home/$U/Desktop/car.war
 chmod -R 777 $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/
 echo "sucessfully create war file."
 
