@@ -10,10 +10,10 @@ echo "getting update from svn head"
 RESULT=`svn up` | grep applicationContext.xml
 if [ -z "$RESULT" ]; then
 	echo "file applicationContext.xml is unchanged .."
-	FLAG=FALSE
+	FLAG=0
 else
 	echo "file applicationContext.xml is changed(updated) .."
-	FLAG=TRUE
+	FLAG=1
 fi
 
 echo "Stopping Tomcat"
@@ -52,6 +52,7 @@ fi
 echo "backup created then car move tomcat folder and changes in some files"
 NOW=$(date +"%m-%d-%Y:%I%p")
 echo "create backup folder name:-"$NOW
+`rm -rf $BACKUP_DIRECTORY_PATH/$NOW`
 mkdir $BACKUP_DIRECTORY_PATH/$NOW
 chmod -R 777 $BACKUP_DIRECTORY_PATH/$NOW
 echo "backup car"
@@ -59,13 +60,14 @@ mv $TOMCAT_DIRECTORY_PATH/webapps/car $BACKUP_DIRECTORY_PATH/$NOW
 echo "copy war file desktop "
 `cp $CARDEKHO_PROJECT_DIRECTORY_PATH/../tbsexport/car.war /home/$U/Desktop/`
 cd /home/$U/Desktop/
+`rm -rf car`
 mkdir car
 cd car
 echo "extract tar file"
 jar xf ../car.war
 echo "rename file"
 cd ..
-mv car/ car/
+#mv car/ car/
 echo "move war in  tomcat"
 mv car/ $TOMCAT_DIRECTORY_PATH/webapps/
 echo "replace email properties file in tomcat"
@@ -79,7 +81,7 @@ fi
 echo "replace SMSMessageSendResource properties file in tomcat"
 cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/SMSMessageSendResource.properties $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
 
-if test $FLAG -eq FALSE ; then
+if test $FLAG -eq 0 ; then
 	echo "replace applicationContext properties file in tomcat"
 	cp -rv  $BACKUP_DIRECTORY_PATH/$NOW/car/WEB-INF/classes/applicationContext.xml $TOMCAT_DIRECTORY_PATH/webapps/car/WEB-INF/classes
 else
